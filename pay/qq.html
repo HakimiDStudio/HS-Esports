@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QQ支付 - 哈基米工作室</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Microsoft Yahei", sans-serif;
+        }
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            text-align: center;
+            padding: 20px;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 40px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+        h2 {
+            margin-bottom: 30px;
+            font-size: 26px;
+        }
+        .slide-wrap {
+            width: 300px;
+            height: 44px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 4px;
+            margin: 0 auto 30px;
+            position: relative;
+            overflow: hidden;
+        }
+        .slide-bg {
+            height: 100%;
+            background: rgba(119, 74, 162, 0.4);
+            width: 0px;
+        }
+        .slide-block {
+            width: 50px;
+            height: 44px;
+            background: #fff;
+            border-radius: 4px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            cursor: grab;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #764ba2;
+            font-weight: bold;
+        }
+        .slide-block:active {
+            cursor: grabbing;
+        }
+        .tip-text {
+            margin-bottom: 10px;
+            font-size: 15px;
+        }
+        .qrcode-box {
+            display: none;
+            margin-top: 20px;
+        }
+        .qrcode-box img {
+            width: 260px;
+            border-radius: 12px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.2);
+        }
+        .success-tip {
+            margin-top: 12px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>安全验证</h2>
+        <p class="tip-text">请按住滑块，拖动到最右侧完成验证</p>
+
+        <div class="slide-wrap">
+            <div class="slide-bg"></div>
+            <div class="slide-block">→</div>
+        </div>
+
+        <div class="qrcode-box">
+            <h3>QQ收款码</h3>
+            <img src="/image/qq.png" alt="QQ收款码">
+            <p class="success-tip">扫码完成付款即可</p>
+        </div>
+    </div>
+
+    <script>
+        const slideWrap = document.querySelector('.slide-wrap');
+        const slideBlock = document.querySelector('.slide-block');
+        const slideBg = document.querySelector('.slide-bg');
+        const qrcodeBox = document.querySelector('.qrcode-box');
+
+        const maxWidth = slideWrap.offsetWidth - slideBlock.offsetWidth;
+        let isMove = false;
+        let startX = 0;
+        let moveX = 0;
+        let moveDatas = [];
+        let lastX = 0;
+
+        slideBlock.addEventListener('mousedown', (e) => {
+            isMove = true;
+            startX = e.clientX;
+            moveDatas = [];
+            lastX = 0;
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!isMove) return;
+            moveX = e.clientX - startX;
+            if (moveX < 0) moveX = 0;
+            if (moveX > maxWidth) moveX = maxWidth;
+            let diff = moveX - lastX;
+            moveDatas.push(diff);
+            lastX = moveX;
+            slideBlock.style.left = moveX + 'px';
+            slideBg.style.width = moveX + 'px';
+        });
+
+        document.addEventListener('mouseup', () => {
+            if (!isMove) return;
+            isMove = false;
+            let isFull = moveX >= maxWidth - 5;
+            let arr = moveDatas.filter(v => v > 0);
+            let maxStep = Math.max(...arr);
+            let minStep = Math.min(...arr);
+            let hasShake = (maxStep - minStep) > 2;
+
+            if (isFull && hasShake) {
+                slideWrap.style.display = 'none';
+                qrcodeBox.style.display = 'block';
+            } else {
+                slideBlock.style.left = 0 + 'px';
+                slideBg.style.width = 0 + 'px';
+                setTimeout(() => {
+                    alert('环境验证失败，即将返回首页');
+                    location.href = '/index.html';
+                }, 300);
+            }
+        });
+
+        slideBlock.addEventListener('touchstart', (e) => {
+            isMove = true;
+            startX = e.touches[0].clientX;
+            moveDatas = [];
+            lastX = 0;
+        });
+        document.addEventListener('touchmove', (e) => {
+            if (!isMove) return;
+            moveX = e.touches[0].clientX - startX;
+            if (moveX < 0) moveX = 0;
+            if (moveX > maxWidth) moveX = maxWidth;
+            let diff = moveX - lastX;
+            moveDatas.push(diff);
+            lastX = moveX;
+            slideBlock.style.left = moveX + 'px';
+            slideBg.style.width = moveX + 'px';
+        });
+        document.addEventListener('touchend', () => {
+            if (!isMove) return;
+            isMove = false;
+            let isFull = moveX >= maxWidth - 5;
+            let arr = moveDatas.filter(v => v > 0);
+            let maxStep = Math.max(...arr);
+            let minStep = Math.min(...arr);
+            let hasShake = (maxStep - minStep) > 2;
+
+            if (isFull && hasShake) {
+                slideWrap.style.display = 'none';
+                qrcodeBox.style.display = 'block';
+            } else {
+                slideBlock.style.left = 0 + 'px';
+                slideBg.style.width = 0 + 'px';
+                setTimeout(() => {
+                    alert('环境验证失败，即将返回首页');
+                    location.href = '/index.html';
+                }, 300);
+            }
+        });
+    </script>
+</body>
+</html>
